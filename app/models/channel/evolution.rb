@@ -67,19 +67,19 @@ class Channel::Evolution < ApplicationRecord
   end
 
   def create_instance
-    Evolution::ApiService.new(self).create_instance
+    Evolution::ApiService.new(channel: self).create_instance
   end
 
   def setup_webhook(chatwoot_url)
-    Evolution::WebhookSetupService.new(self).perform
+    Evolution::WebhookSetupService.new(channel: self).perform
   end
 
   def fetch_qr_code
-    Evolution::ApiService.new(self).get_qr_code
+    Evolution::ApiService.new(channel: self).get_qr_code
   end
 
   def connection_status
-    Evolution::ApiService.new(self).check_connection_status
+    Evolution::ApiService.new(channel: self).check_connection_status
   end
 
   def process_webhook(params)

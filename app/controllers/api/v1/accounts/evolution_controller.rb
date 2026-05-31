@@ -3,7 +3,7 @@ class Api::V1::Accounts::EvolutionController < Api::V1::Accounts::BaseController
   before_action :ensure_evolution_channel
 
   def get_qr_code
-    result = Evolution::ApiService.new(@inbox.channel).get_qr_code
+    result = Evolution::ApiService.new(channel: @inbox.channel).get_qr_code
 
     if result[:success]
       render json: {
@@ -16,7 +16,7 @@ class Api::V1::Accounts::EvolutionController < Api::V1::Accounts::BaseController
   end
 
   def connection_status
-    result = Evolution::ApiService.new(@inbox.channel).check_connection_status
+    result = Evolution::ApiService.new(channel: @inbox.channel).check_connection_status
 
     if result[:success]
       render json: {
@@ -29,7 +29,7 @@ class Api::V1::Accounts::EvolutionController < Api::V1::Accounts::BaseController
   end
 
   def reconnect
-    result = Evolution::ApiService.new(@inbox.channel).connect
+    result = Evolution::ApiService.new(channel: @inbox.channel).connect
 
     if result[:success]
       render json: { message: 'Connection initiated' }
@@ -39,7 +39,7 @@ class Api::V1::Accounts::EvolutionController < Api::V1::Accounts::BaseController
   end
 
   def disconnect
-    result = Evolution::ApiService.new(@inbox.channel).logout
+    result = Evolution::ApiService.new(channel: @inbox.channel).logout
 
     if result[:success]
       render json: { message: 'Disconnected successfully' }
@@ -49,7 +49,7 @@ class Api::V1::Accounts::EvolutionController < Api::V1::Accounts::BaseController
   end
 
   def delete_instance
-    result = Evolution::ApiService.new(@inbox.channel).delete_instance
+    result = Evolution::ApiService.new(channel: @inbox.channel).delete_instance
 
     if result[:success]
       render json: { message: 'Instance deleted successfully' }
