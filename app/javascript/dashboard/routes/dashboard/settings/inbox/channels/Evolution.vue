@@ -22,6 +22,7 @@ export default {
       instanceName: '',
       step: 'form',
       inboxId: null,
+      channelId: null,
       qrCode: null,
       connectionStatus: 'pending',
       qrRefreshInterval: null,
@@ -64,7 +65,9 @@ export default {
         });
 
         this.inboxId = evolutionChannel.id;
+        this.channelId = evolutionChannel?.channel?.id || evolutionChannel?.channel_id || null;
         this.step = 'qr';
+        await this.ensureChannelId();
         await this.fetchQrCode();
         await this.fetchConnectionStatus();
         this.startPolling();
@@ -74,6 +77,14 @@ export default {
             this.$t('INBOX_MGMT.ADD.EVOLUTION.API.ERROR_MESSAGE')
         );
       }
+    },
+    async ensureChannelId() {
+      if (!this.inboxId || this.channelId) return;
+
+      const { data } = await axios.get(
+        `/api/v1/accounts/${this.accountId}/inboxes/${this.inboxId}`
+      );
+      this.channelId = data?.channel?.id || data?.channel_id || null;
     },
     startPolling() {
       this.stopPolling();
@@ -102,43 +113,35 @@ export default {
     },
     async fetchQrCode() {
       if (!this.inboxId) return;
+      try {
+        await this.ensureChannelId();
+        if (!this.channelId) return;
 
-      const paths = [
-        `/api/v1/accounts/${this.accountId}/evolution/${this.inboxId}/qr_code`,
-        `/api/v1/accounts/${this.accountId}/evolution/${this.inboxId}/get_qr_code`,
-      ];
-
-      for (const path of paths) {
-        try {
-          const { data } = await axios.get(path);
-          this.qrCode = data?.qr_code || null;
-          this.connectionStatus = data?.status || this.connectionStatus;
-          if (this.connectionStatus === 'connected') {
-            this.stopPolling();
-          }
-          return;
-        } catch (_) {
+        const { data } = await axios.get(
+          `/api/v1/accounts/${this.accountId}/inboxes/${this.inboxId}/evolution/${this.channelId}/get_qr_code`
+        );
+        this.qrCode = data?.qr_code || null;
+        this.connectionStatus = data?.status || this.connectionStatus;
+        if (this.connectionStatus === 'connected') {
+          this.stopPolling();
         }
+      } catch (_) {
       }
     },
     async fetchConnectionStatus() {
       if (!this.inboxId) return;
+      try {
+        await this.ensureChannelId();
+        if (!this.channelId) return;
 
-      const paths = [
-        `/api/v1/accounts/${this.accountId}/evolution/${this.inboxId}/connection_status`,
-        `/api/v1/accounts/${this.accountId}/evolution/${this.inboxId}/status`,
-      ];
-
-      for (const path of paths) {
-        try {
-          const { data } = await axios.get(path);
-          this.connectionStatus = data?.status || this.connectionStatus;
-          if (this.connectionStatus === 'connected') {
-            this.stopPolling();
-          }
-          return;
-        } catch (_) {
+        const { data } = await axios.get(
+          `/api/v1/accounts/${this.accountId}/inboxes/${this.inboxId}/evolution/${this.channelId}/connection_status`
+        );
+        this.connectionStatus = data?.status || this.connectionStatus;
+        if (this.connectionStatus === 'connected') {
+          this.stopPolling();
         }
+      } catch (_) {
       }
     },
     continueToAgents() {
