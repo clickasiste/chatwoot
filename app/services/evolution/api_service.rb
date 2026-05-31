@@ -22,7 +22,7 @@ class Evolution::ApiService
           SEND_MESSAGE
           CONTACTS.UPSERT
           CONTACTS_UPDATE
-        ].join(',')
+        ]
       }.to_json
     )
 
