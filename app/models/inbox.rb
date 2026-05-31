@@ -162,6 +162,10 @@ class Inbox < ApplicationRecord
     channel_type == 'Channel::Whatsapp'
   end
 
+  def evolution?
+    channel_type == 'Channel::Evolution'
+  end
+
   def twilio_whatsapp?
     channel_type == 'Channel::TwilioSms' && channel.medium == 'whatsapp'
   end

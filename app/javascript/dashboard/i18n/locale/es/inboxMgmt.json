@@ -237,6 +237,25 @@
           }
         }
       },
+      "EVOLUTION": {
+        "TITLE": "Evolution WhatsApp",
+        "DESC": "Conecta tu instancia de WhatsApp usando Evolution API.",
+        "CHANNEL_NAME": {
+          "LABEL": "Nombre del Inbox",
+          "PLACEHOLDER": "Ingresa el nombre del inbox",
+          "ERROR": "El nombre del inbox es requerido"
+        },
+        "INSTANCE_NAME": {
+          "LABEL": "Nombre de Instancia",
+          "PLACEHOLDER": "Ingresa el nombre de la instancia",
+          "SUBTITLE": "Esto se usará para identificar tu instancia de Evolution",
+          "ERROR": "El nombre de la instancia es requerido"
+        },
+        "SUBMIT_BUTTON": "Crear Inbox",
+        "API": {
+          "ERROR_MESSAGE": "No se pudo crear el canal Evolution"
+        }
+      },
       "WHATSAPP": {
         "TITLE": "Canal de WhatsApp",
         "DESC": "Comience a apoyar a sus clientes mediante WhatsApp.",
@@ -472,6 +491,10 @@
           "SMS": {
             "TITLE": "SMS",
             "DESCRIPTION": "Integrate SMS channel with Twilio or bandwidth"
+          },
+          "EVOLUTION": {
+            "TITLE": "Evolution",
+            "DESCRIPTION": "Conectar WhatsApp usando Evolution API"
           },
           "API": {
             "TITLE": "API",
@@ -713,6 +736,26 @@
         "REGISTER_ERROR": "Failed to register webhook. Please try again.",
         "CONFIGURED_SUCCESS": "Webhook configured successfully",
         "URL_MISMATCH": "Webhook URL mismatch"
+      }
+    },
+    "EVOLUTION": {
+      "TITLE": "Conexión Evolution",
+      "DESC": "Gestiona tu conexión de Evolution WhatsApp",
+      "CONNECTED": "Tu WhatsApp está conectado y listo para recibir mensajes.",
+      "SCAN_QR": "Escanea este código QR con tu aplicación de WhatsApp para conectar.",
+      "RECONNECT": "Reconectar",
+      "DISCONNECT": "Desconectar",
+      "RECONNECT_SUCCESS": "Reconexión iniciada exitosamente",
+      "RECONNECT_ERROR": "Error al reconectar",
+      "DISCONNECT_SUCCESS": "Desconectado exitosamente",
+      "DISCONNECT_ERROR": "Error al desconectar",
+      "STATUS_ERROR": "Error al obtener el estado de conexión",
+      "STATUS": {
+        "PENDING": "Pendiente",
+        "CONNECTING": "Conectando",
+        "CONNECTED": "Conectado",
+        "DISCONNECTED": "Desconectado",
+        "ERROR": "Error"
       }
     },
     "SETTINGS": "Ajustes",
@@ -1165,7 +1208,8 @@
       "API": "Canal API",
       "INSTAGRAM": "Instagram",
       "TIKTOK": "TikTok",
-      "VOICE": "Voice"
+      "VOICE": "Voice",
+      "EVOLUTION": "Evolution"
     }
   }
 }

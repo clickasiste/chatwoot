@@ -265,6 +265,14 @@ Rails.application.routes.draw do
               post :disable_whatsapp_calling, on: :member
             end
 
+            resources :evolution, only: [], module: :accounts do
+              get :get_qr_code, on: :member
+              get :connection_status, on: :member
+              post :reconnect, on: :member
+              post :disconnect, on: :member
+              delete :delete_instance, on: :member
+            end
+
             resource :csat_template, only: [:show, :create], controller: 'inbox_csat_templates' do
               post :analyze, on: :collection
             end
@@ -615,6 +623,7 @@ Rails.application.routes.draw do
   post 'webhooks/sms/:phone_number', to: 'webhooks/sms#process_payload'
   get 'webhooks/whatsapp/:phone_number', to: 'webhooks/whatsapp#verify'
   post 'webhooks/whatsapp/:phone_number', to: 'webhooks/whatsapp#process_payload'
+  post 'webhooks/evolution/:instance_name', to: 'webhooks/evolution#process_payload'
   get 'webhooks/instagram', to: 'webhooks/instagram#verify'
   post 'webhooks/instagram', to: 'webhooks/instagram#events'
   post 'webhooks/tiktok', to: 'webhooks/tiktok#events'

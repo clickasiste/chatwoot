@@ -237,6 +237,25 @@
           }
         }
       },
+      "EVOLUTION": {
+        "TITLE": "Evolution WhatsApp",
+        "DESC": "Connect your WhatsApp instance using Evolution API.",
+        "CHANNEL_NAME": {
+          "LABEL": "Inbox Name",
+          "PLACEHOLDER": "Enter inbox name",
+          "ERROR": "Inbox name is required"
+        },
+        "INSTANCE_NAME": {
+          "LABEL": "Instance Name",
+          "PLACEHOLDER": "Enter instance name",
+          "SUBTITLE": "This will be used to identify your Evolution instance",
+          "ERROR": "Instance name is required"
+        },
+        "SUBMIT_BUTTON": "Create Inbox",
+        "API": {
+          "ERROR_MESSAGE": "Could not create Evolution channel"
+        }
+      },
       "WHATSAPP": {
         "TITLE": "WhatsApp Channel",
         "DESC": "Start supporting your customers via WhatsApp.",
@@ -478,6 +497,10 @@
           "SMS": {
             "TITLE": "SMS",
             "DESCRIPTION": "Integrate SMS channel with Twilio or bandwidth"
+          },
+          "EVOLUTION": {
+            "TITLE": "Evolution",
+            "DESCRIPTION": "Connect WhatsApp using Evolution API"
           },
           "API": {
             "TITLE": "API",
@@ -740,6 +763,26 @@
         "REGISTER_ERROR": "Failed to register webhook. Please try again.",
         "CONFIGURED_SUCCESS": "Webhook configured successfully",
         "URL_MISMATCH": "Webhook URL mismatch"
+      }
+    },
+    "EVOLUTION": {
+      "TITLE": "Evolution Connection",
+      "DESC": "Manage your Evolution WhatsApp connection",
+      "CONNECTED": "Your WhatsApp is connected and ready to receive messages.",
+      "SCAN_QR": "Scan this QR code with your WhatsApp app to connect.",
+      "RECONNECT": "Reconnect",
+      "DISCONNECT": "Disconnect",
+      "RECONNECT_SUCCESS": "Reconnection initiated successfully",
+      "RECONNECT_ERROR": "Failed to reconnect",
+      "DISCONNECT_SUCCESS": "Disconnected successfully",
+      "DISCONNECT_ERROR": "Failed to disconnect",
+      "STATUS_ERROR": "Failed to fetch connection status",
+      "STATUS": {
+        "PENDING": "Pending",
+        "CONNECTING": "Connecting",
+        "CONNECTED": "Connected",
+        "DISCONNECTED": "Disconnected",
+        "ERROR": "Error"
       }
     },
     "SETTINGS": "Settings",
@@ -1196,7 +1239,8 @@
       "API": "API Channel",
       "INSTAGRAM": "Instagram",
       "TIKTOK": "TikTok",
-      "VOICE": "Voice"
+      "VOICE": "Voice",
+      "EVOLUTION": "Evolution"
     }
   }
 }

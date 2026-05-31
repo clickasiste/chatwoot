@@ -376,6 +376,30 @@ export const actions = {
       return null;
     }
   },
+  getEvolutionStatus: async (_, { inboxId }) => {
+    try {
+      const response = await InboxesAPI.getConnectionStatus(inboxId);
+      return response.data;
+    } catch (error) {
+      throw new Error(error);
+    }
+  },
+  reconnectEvolution: async (_, { inboxId }) => {
+    try {
+      const response = await InboxesAPI.reconnect(inboxId);
+      return response.data;
+    } catch (error) {
+      throw new Error(error);
+    }
+  },
+  disconnectEvolution: async (_, { inboxId }) => {
+    try {
+      const response = await InboxesAPI.disconnectEvolution(inboxId);
+      return response.data;
+    } catch (error) {
+      throw new Error(error);
+    }
+  },
 };
 
 export const mutations = {

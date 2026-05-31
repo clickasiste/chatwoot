@@ -21,7 +21,7 @@ class ContactInboxBuilder
       email_source_id
     when 'Channel::Sms'
       phone_source_id
-    when 'Channel::Api', 'Channel::WebWidget'
+    when 'Channel::Api', 'Channel::WebWidget', 'Channel::Evolution'
       SecureRandom.uuid
     else
       raise "Unsupported operation for this channel: #{@inbox.channel_type}"
@@ -100,7 +100,7 @@ class ContactInboxBuilder
   end
 
   def allowed_channels?
-    @inbox.email? || @inbox.sms? || @inbox.twilio? || @inbox.whatsapp?
+    @inbox.email? || @inbox.sms? || @inbox.twilio? || @inbox.whatsapp? || @inbox.evolution?
   end
 end
 

@@ -11,6 +11,7 @@ export const INBOX_TYPES = {
   SMS: 'Channel::Sms',
   INSTAGRAM: 'Channel::Instagram',
   TIKTOK: 'Channel::Tiktok',
+  EVOLUTION: 'Channel::Evolution',
 };
 
 // Add providers here as they gain voice capability (e.g., WhatsApp Cloud, Twilio WhatsApp)
@@ -53,6 +54,7 @@ const INBOX_ICON_MAP_FILL = {
   [INBOX_TYPES.LINE]: 'i-ri-line-fill',
   [INBOX_TYPES.INSTAGRAM]: 'i-ri-instagram-fill',
   [INBOX_TYPES.TIKTOK]: 'i-ri-tiktok-fill',
+  [INBOX_TYPES.EVOLUTION]: 'i-ri-whatsapp-fill',
 };
 
 const DEFAULT_ICON_FILL = 'i-ri-chat-1-fill';
@@ -68,6 +70,7 @@ const INBOX_ICON_MAP_LINE = {
   [INBOX_TYPES.LINE]: 'i-woot-line',
   [INBOX_TYPES.INSTAGRAM]: 'i-woot-instagram',
   [INBOX_TYPES.TIKTOK]: 'i-woot-tiktok',
+  [INBOX_TYPES.EVOLUTION]: 'i-woot-whatsapp',
 };
 
 const DEFAULT_ICON_LINE = 'i-ri-chat-1-line';
@@ -117,6 +120,9 @@ export const getReadableInboxByType = (type, phoneNumber) => {
     case INBOX_TYPES.LINE:
       return 'line';
 
+    case INBOX_TYPES.EVOLUTION:
+      return 'whatsapp';
+
     default:
       return 'chat';
   }
@@ -158,6 +164,9 @@ export const getInboxClassByType = (type, phoneNumber) => {
 
     case INBOX_TYPES.TIKTOK:
       return 'brand-tiktok';
+
+    case INBOX_TYPES.EVOLUTION:
+      return 'brand-whatsapp';
 
     default:
       return 'chat';

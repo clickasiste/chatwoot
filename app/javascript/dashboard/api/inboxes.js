@@ -60,6 +60,26 @@ class Inboxes extends CacheEnabledApiClient {
   disableWhatsappCalling(inboxId) {
     return axios.post(`${this.url}/${inboxId}/disable_whatsapp_calling`);
   }
+
+  getQrCode(inboxId) {
+    return axios.get(`${this.url}/${inboxId}/get_qr_code`);
+  }
+
+  getConnectionStatus(inboxId) {
+    return axios.get(`${this.url}/${inboxId}/connection_status`);
+  }
+
+  reconnect(inboxId) {
+    return axios.post(`${this.url}/${inboxId}/reconnect`);
+  }
+
+  disconnectEvolution(inboxId) {
+    return axios.post(`${this.url}/${inboxId}/disconnect`);
+  }
+
+  deleteEvolutionInstance(inboxId) {
+    return axios.delete(`${this.url}/${inboxId}/delete_instance`);
+  }
 }
 
 export default new Inboxes();
