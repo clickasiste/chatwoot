@@ -1,7 +1,7 @@
 class Evolution::ApiService
   pattr_initialize [:channel!]
 
-  BASE_URL = "#{ENV.fetch('EVOLUTION_API_URL', 'https://evo.clickasiste.com')}/v2"
+  BASE_URL = ENV.fetch('EVOLUTION_API_URL', 'https://evo.clickasiste.com')
 
   def create_instance
     response = HTTParty.post(

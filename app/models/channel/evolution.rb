@@ -91,7 +91,11 @@ class Channel::Evolution < ApplicationRecord
   def setup_evolution_instance
     return if instance_id.present?
 
-    create_instance
+    result = create_instance
+    Rails.logger.info("[Evolution] setup_evolution_instance result: #{result.inspect}")
+  rescue StandardError => e
+    Rails.logger.error("[Evolution] setup_evolution_instance failed: #{e.message}")
+    Rails.logger.error(e.backtrace.first(10).join("\n"))
   end
 end
 

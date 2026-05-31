@@ -6,11 +6,13 @@ class Evolution::SendMessageService
 
     payload = build_payload(to, body, media_url)
 
-    response = HTTParty.post(
-      "#{base_url}/message/sendText/#{channel.instance_id}",
-      headers: headers,
-      body: payload.to_json
-    )
+    endpoint = if media_url.present?
+                 "#{base_url}/message/sendMedia/#{channel.instance_id}"
+               else
+                 "#{base_url}/message/sendText/#{channel.instance_id}"
+               end
+
+    response = HTTParty.post(endpoint, headers: headers, body: payload.to_json)
 
     if response.success?
       data = response.parsed_response
@@ -30,7 +32,7 @@ class Evolution::SendMessageService
   private
 
   def base_url
-    "#{ENV.fetch('EVOLUTION_API_URL', 'https://evo.clickasiste.com')}/instance"
+    ENV.fetch('EVOLUTION_API_URL', 'https://evo.clickasiste.com')
   end
 
   def headers

@@ -40,7 +40,7 @@ class Evolution::WebhookSetupService
   private
 
   def base_url
-    "#{ENV.fetch('EVOLUTION_API_URL', 'https://evo.clickasiste.com')}/instance"
+    ENV.fetch('EVOLUTION_API_URL', 'https://evo.clickasiste.com')
   end
 
   def headers
