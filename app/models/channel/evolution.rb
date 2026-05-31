@@ -35,7 +35,6 @@ class Channel::Evolution < ApplicationRecord
   ].freeze
 
   has_secure_token :identifier
-  has_secure_token :api_key
 
   validates :instance_name, presence: true, length: { maximum: 100 }
   validates :webhook_url, length: { maximum: Limits::URL_LENGTH_LIMIT }, if: -> { webhook_url.present? }
