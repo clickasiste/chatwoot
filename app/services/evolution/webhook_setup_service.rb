@@ -62,13 +62,13 @@ class Evolution::WebhookSetupService
         url: webhook_url,
         byEvents: true,
         events: %w[
-          QRCODE.UPDATED
-          CONNECTION.UPDATE
-          MESSAGES.UPSERT
-          MESSAGES.UPDATE
-          MESSAGES.DELETE
+          QRCODE_UPDATED
+          CONNECTION_UPDATE
+          MESSAGES_UPSERT
+          MESSAGES_UPDATE
+          MESSAGES_DELETE
           SEND_MESSAGE
-          CONTACTS.UPSERT
+          CONTACTS_UPSERT
           CONTACTS_UPDATE
         ]
       }
