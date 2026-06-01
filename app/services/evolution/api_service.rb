@@ -41,10 +41,9 @@ class Evolution::ApiService
   end
 
   def connect
-    response = HTTParty.post(
+    response = HTTParty.get(
       "#{BASE_URL}/instance/connect/#{channel.instance_id}",
-      headers: headers,
-      body: {}.to_json
+      headers: headers
     )
 
     if response.success?
@@ -78,16 +77,16 @@ class Evolution::ApiService
     end
 
     qr_response = HTTParty.get(
-      "#{BASE_URL}/instance/qrcode/#{channel.instance_id}",
+      "#{BASE_URL}/instance/connect/#{channel.instance_id}",
       headers: headers
     )
 
     if qr_response.success?
       qr_data = qr_response.parsed_response
-      qr_base64 = qr_data.dig('qrcode', 'qrcode')
+      qr_code = qr_data['code'] || qr_data.dig('qrcode', 'code') || qr_data.dig('qrcode', 'qrcode')
 
-      channel.update!(qr_code: qr_base64, status: 'connecting')
-      { success: true, status: 'connecting', qr_code: qr_base64 }
+      channel.update!(qr_code: qr_code, status: 'connecting')
+      { success: true, status: 'connecting', qr_code: qr_code }
     else
       { success: false, error: qr_response.parsed_response }
     end

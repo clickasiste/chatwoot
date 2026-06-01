@@ -4,6 +4,7 @@ import { useVuelidate } from '@vuelidate/core';
 import { required } from '@vuelidate/validators';
 import { useAlert } from 'dashboard/composables';
 import EvolutionAPI from 'dashboard/api/evolution';
+import QRCode from 'qrcode';
 import router from '../../../../index';
 import PageHeader from '../../SettingsSubPageHeader.vue';
 import NextButton from 'dashboard/components-next/button/Button.vue';
@@ -24,6 +25,7 @@ export default {
       inboxId: null,
       channelId: null,
       qrCode: null,
+      qrImageSrc: null,
       connectionStatus: 'pending',
       qrRefreshInterval: null,
       statusPollInterval: null,
@@ -35,10 +37,6 @@ export default {
     }),
     accountId() {
       return this.$route.params.accountId;
-    },
-    qrImageSrc() {
-      if (!this.qrCode) return null;
-      return `data:image/png;base64,${this.qrCode}`;
     },
   },
   validations: {
@@ -117,6 +115,7 @@ export default {
 
         const { data } = await EvolutionAPI.getQrCode(this.inboxId, this.channelId);
         this.qrCode = data?.qr_code || null;
+        this.qrImageSrc = await this.buildQrImageSrc(this.qrCode);
         this.connectionStatus = data?.status || this.connectionStatus;
         if (this.connectionStatus === 'connected') {
           this.stopPolling();
@@ -147,6 +146,17 @@ export default {
           inbox_id: this.inboxId,
         },
       });
+    },
+    async buildQrImageSrc(qrCode) {
+      if (!qrCode) return null;
+
+      if (qrCode.startsWith('data:image/')) return qrCode;
+
+      if (/^[A-Za-z0-9+/=]+$/.test(qrCode) && qrCode.length > 200) {
+        return `data:image/png;base64,${qrCode}`;
+      }
+
+      return QRCode.toDataURL(qrCode);
     },
   },
 };

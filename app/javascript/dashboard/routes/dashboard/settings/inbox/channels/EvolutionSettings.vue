@@ -2,6 +2,7 @@
 import { mapGetters } from 'vuex';
 import NextButton from 'dashboard/components-next/button/Button.vue';
 import { useAlert, useToast } from 'dashboard/composables';
+import QRCode from 'qrcode';
 
 export default {
   components: {
@@ -53,7 +54,7 @@ export default {
         });
         this.connectionStatus = response.status;
         if (response.qr_code) {
-          this.qrCode = `data:image/png;base64,${response.qr_code}`;
+          this.qrCode = await this.buildQrImageSrc(response.qr_code);
         }
       } catch (error) {
         useAlert(this.$t('INBOX_MGMT.DETAILS.EVOLUTION.STATUS_ERROR'));
@@ -98,6 +99,17 @@ export default {
       if (this.pollingInterval) {
         clearInterval(this.pollingInterval);
       }
+    },
+    async buildQrImageSrc(qrCode) {
+      if (!qrCode) return null;
+
+      if (qrCode.startsWith('data:image/')) return qrCode;
+
+      if (/^[A-Za-z0-9+/=]+$/.test(qrCode) && qrCode.length > 200) {
+        return `data:image/png;base64,${qrCode}`;
+      }
+
+      return QRCode.toDataURL(qrCode);
     },
   },
 };
