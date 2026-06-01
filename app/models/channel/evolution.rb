@@ -110,33 +110,43 @@ class Channel::Evolution < ApplicationRecord
 
   def handle_message_status_update(params)
     data = params['data'] || params[:data] || {}
-    key_id = data['keyId'] || data[:keyId]
-    status = data['status'] || data[:status]
-
-    return if key_id.blank? || status.blank?
+    key_id = data.dig('key', 'id')
+    evolution_status = data['status']
+    return if key_id.blank? || evolution_status.blank?
 
     message = inbox.messages.find_by(source_id: key_id)
-    unless message
-      Rails.logger.info("[Evolution] Message status update: no message found for source_id #{key_id}")
+    if message.nil?
+      Rails.logger.info "[Evolution] status update ignored, message not found source_id=#{key_id}"
       return
     end
 
-    new_status = case status.to_s.upcase
-                 when 'SERVER_ACK' then 'sent'
-                 when 'DELIVERY_ACK' then 'delivered'
-                 when 'READ', 'PLAYED' then 'read'
-                 else nil
-                 end
-
+    new_status = map_evolution_status(evolution_status)
     return if new_status.blank?
-    return if message.status == new_status
-    return if message.read? && new_status == 'delivered'
-    return if (message.read? || message.delivered?) && new_status == 'sent'
+    return if message.status.to_s == new_status.to_s
 
+    previous_status = message.status
     message.update!(status: new_status)
-    Rails.logger.info("[Evolution] Message #{message.id} status updated to #{new_status}")
+
+    # Force ActionCable broadcast (frontend depends on this to update check marks)
+    Rails.configuration.dispatcher.dispatch(
+      'message.updated',
+      Time.zone.now,
+      message: message,
+      performed_by: nil
+    )
+
+    Rails.logger.info "[Evolution] message #{message.id} status #{previous_status} -> #{new_status} broadcasted"
   rescue StandardError => e
-    Rails.logger.error("[Evolution] handle_message_status_update error: #{e.message}")
+    Rails.logger.error "[Evolution] handle_message_status_update failed: #{e.class} #{e.message}"
+    Rails.logger.error e.backtrace.first(5).join("\n")
+  end
+
+  def map_evolution_status(evolution_status)
+    case evolution_status.to_s.upcase
+    when 'SERVER_ACK', 'PENDING' then 'sent'
+    when 'DELIVERY_ACK'          then 'delivered'
+    when 'READ', 'PLAYED'        then 'read'
+    end
   end
 
   def handle_connection_update(params)
