@@ -114,9 +114,10 @@ class Channel::Evolution < ApplicationRecord
 
   def handle_message_status_update(params)
     data = params['data'] || params[:data] || {}
-    key_id = data.dig('key', 'id')
+    key_id = data['keyId'] || data.dig('key', 'id')
     evolution_status = data['status']
     return if key_id.blank? || evolution_status.blank?
+    Rails.logger.info "[Evolution] status update keyId=#{key_id} evolution_status=#{evolution_status}"
 
     message = inbox.messages.find_by(source_id: key_id)
     if message.nil?
