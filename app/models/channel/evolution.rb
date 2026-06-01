@@ -38,7 +38,7 @@ class Channel::Evolution < ApplicationRecord
 
   validates :instance_name, presence: true, length: { maximum: 100 }
   validates :webhook_url, length: { maximum: Limits::URL_LENGTH_LIMIT }, if: -> { webhook_url.present? }
-  validates :phone_number, presence: true, if: :active?
+  validates :phone_number, presence: true, if: :connected?
 
   enum status: {
     pending: 'pending',
@@ -63,6 +63,10 @@ class Channel::Evolution < ApplicationRecord
     return false if status == 'disconnected'
 
     true
+  end
+
+  def connected?
+    status == 'connected'
   end
 
   def inactive?
