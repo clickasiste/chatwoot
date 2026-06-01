@@ -110,7 +110,7 @@ class Evolution::ApiService
         'connecting' => 'connecting'
       }
 
-      new_status = status_map[state] || 'error'
+      new_status = status_map[state] || 'connecting'
       channel.update!(status: new_status) if channel.status != new_status
 
       { success: true, status: new_status, state: state }

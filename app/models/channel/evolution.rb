@@ -59,7 +59,10 @@ class Channel::Evolution < ApplicationRecord
   end
 
   def active?
-    status == 'connected' && instance_id.present?
+    return false if instance_id.blank?
+    return false if status == 'disconnected'
+
+    true
   end
 
   def inactive?
