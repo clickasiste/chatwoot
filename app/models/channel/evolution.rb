@@ -92,6 +92,8 @@ class Channel::Evolution < ApplicationRecord
     case event
     when 'messages.upsert', 'MESSAGES_UPSERT'
       Evolution::IncomingMessageService.new(inbox: inbox, params: params).perform
+    when 'messages.update', 'MESSAGES_UPDATE'
+      handle_message_status_update(params)
     when 'connection.update', 'CONNECTION_UPDATE'
       handle_connection_update(params)
     when 'send.message', 'SEND_MESSAGE'
@@ -105,6 +107,37 @@ class Channel::Evolution < ApplicationRecord
   end
 
   private
+
+  def handle_message_status_update(params)
+    data = params['data'] || params[:data] || {}
+    key_id = data['keyId'] || data[:keyId]
+    status = data['status'] || data[:status]
+
+    return if key_id.blank? || status.blank?
+
+    message = inbox.messages.find_by(source_id: key_id)
+    unless message
+      Rails.logger.info("[Evolution] Message status update: no message found for source_id #{key_id}")
+      return
+    end
+
+    new_status = case status.to_s.upcase
+                 when 'SERVER_ACK' then 'sent'
+                 when 'DELIVERY_ACK' then 'delivered'
+                 when 'READ', 'PLAYED' then 'read'
+                 else nil
+                 end
+
+    return if new_status.blank?
+    return if message.status == new_status
+    return if message.read? && new_status == 'delivered'
+    return if (message.read? || message.delivered?) && new_status == 'sent'
+
+    message.update!(status: new_status)
+    Rails.logger.info("[Evolution] Message #{message.id} status updated to #{new_status}")
+  rescue StandardError => e
+    Rails.logger.error("[Evolution] handle_message_status_update error: #{e.message}")
+  end
 
   def handle_connection_update(params)
     data = params['data'] || params[:data] || {}
