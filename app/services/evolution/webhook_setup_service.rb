@@ -1,18 +1,17 @@
 class Evolution::WebhookSetupService
   pattr_initialize [:channel!]
 
-  def perform
-    return unless channel.instance_id.present?
+  BASE_URL = ENV.fetch('EVOLUTION_API_URL', 'https://evo.clickasiste.com')
 
-    webhook_url = build_webhook_url
+  def perform
     response = HTTParty.post(
-      "#{base_url}/webhook/set",
+      "#{BASE_URL}/webhook/set/#{channel.instance_name}",
       headers: headers,
-      body: webhook_payload(webhook_url).to_json
+      body: webhook_payload.to_json
     )
 
     if response.success?
-      Rails.logger.info("[Evolution] Webhook configured for instance: #{channel.instance_id}")
+      Rails.logger.info("[Evolution] Webhook configured for #{channel.instance_name}")
       { success: true }
     else
       Rails.logger.error("[Evolution] Webhook setup failed: #{response.body}")
@@ -39,10 +38,6 @@ class Evolution::WebhookSetupService
 
   private
 
-  def base_url
-    ENV.fetch('EVOLUTION_API_URL', 'https://evo.clickasiste.com')
-  end
-
   def headers
     {
       'Content-Type' => 'application/json',
@@ -50,17 +45,13 @@ class Evolution::WebhookSetupService
     }
   end
 
-  def build_webhook_url
-    frontend_url = ENV.fetch('FRONTEND_URL', nil)
-    "#{frontend_url}/webhooks/evolution/#{channel.identifier}"
-  end
-
-  def webhook_payload(webhook_url)
+  def webhook_payload
     {
-      instanceName: channel.instance_id,
       webhook: {
-        url: webhook_url,
+        enabled: true,
+        url: "#{ENV.fetch('FRONTEND_URL')}/webhooks/evolution/#{channel.instance_name}",
         byEvents: true,
+        base64: false,
         events: %w[
           QRCODE_UPDATED
           CONNECTION_UPDATE

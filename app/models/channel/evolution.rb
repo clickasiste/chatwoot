@@ -93,6 +93,12 @@ class Channel::Evolution < ApplicationRecord
 
     result = create_instance
     Rails.logger.info("[Evolution] setup_evolution_instance result: #{result.inspect}")
+
+    if result[:success]
+      reload
+      webhook_result = Evolution::WebhookSetupService.new(channel: self).perform
+      Rails.logger.info("[Evolution] Webhook setup result: #{webhook_result.inspect}")
+    end
   rescue StandardError => e
     Rails.logger.error("[Evolution] setup_evolution_instance failed: #{e.message}")
     Rails.logger.error(e.backtrace.first(10).join("\n"))
