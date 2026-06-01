@@ -1,54 +1,34 @@
 class Evolution::IncomingMessageService
-  include ::Whatsapp::IncomingMessageServiceHelpers
-  include ::Whatsapp::IncomingMessageIdentifierHelper
-
   pattr_initialize [:inbox!, :params!]
 
   def perform
     return if processing_own_message?
 
-    processed_params
-
-    if processed_params[:typeWebhook].present?
-      process_status_update
-    elsif processed_params[:key]&.[]('fromMe')
+    if processed_params.dig('key', 'fromMe')
       process_outgoing_message
     else
       process_incoming_message
     end
   rescue StandardError => e
     Rails.logger.error("[Evolution] Incoming message error: #{e.message}")
-    Rails.logger.error(e.backtrace.join("\n"))
+    Rails.logger.error(e.backtrace.first(10).join("\n"))
   end
 
   private
 
   def processed_params
-    @processed_params ||= params.is_a?(Hash) ? params : {}
+    @processed_params ||= begin
+      data = params['data'] || params[:data] || params
+      data.is_a?(Hash) ? data.with_indifferent_access : {}.with_indifferent_access
+    end
   end
 
   def processing_own_message?
-    processed_params[:key]&.[]('fromMe') == true
-  end
-
-  def process_status_update
-    status = processed_params[:status]
-    return if status.blank?
-
-    external_id = processed_params.dig(:key, :id)
-    return if external_id.blank?
-
-    message = find_message_by_source_id(external_id)
-    return unless message
-
-    message.status = map_evolution_status(status)
-    message.save!
-  rescue StandardError => e
-    Rails.logger.error("[Evolution] Status update error: #{e.message}")
+    processed_params.dig('key', 'fromMe') == true
   end
 
   def process_outgoing_message
-    Rails.logger.info("[Evolution] Outgoing message acknowledged: #{processed_params.dig(:key, :id)}")
+    Rails.logger.info("[Evolution] Outgoing message acknowledged: #{processed_params.dig('key', 'id')}")
   end
 
   def process_incoming_message
@@ -57,100 +37,92 @@ class Evolution::IncomingMessageService
     set_contact
     return unless @contact
 
-    ActiveRecord::Base.transaction do
-      set_conversation
-      create_message
-    end
+    set_contact_inbox
+    set_conversation
+    create_message
   end
 
   def duplicate_message?
-    source_id = processed_params.dig(:key, :id)
+    source_id = processed_params.dig('key', 'id')
     return false if source_id.blank?
 
-    find_message_by_source_id(source_id).present?
+    @inbox.messages.find_by(source_id: source_id).present?
   end
 
   def set_contact
-    phone_number = processed_params.dig(:key, :remote)
+    remote_jid = processed_params.dig('key', 'remoteJid')
+    return if remote_jid.blank?
+
+    phone_number = extract_phone_number(remote_jid)
     return if phone_number.blank?
 
-    phone_number = normalize_phone_number(phone_number)
+    push_name = processed_params['pushName'].presence || phone_number
 
-    @contact = @inbox.account.contacts.where(
-      phone_number: phone_number
-    ).first_or_create!(name: phone_number)
+    contact_inbox = ::ContactInboxWithContactBuilder.new(
+      source_id: phone_number,
+      inbox: @inbox,
+      contact_attributes: {
+        name: push_name,
+        phone_number: "+#{phone_number}"
+      }
+    ).perform
+
+    @contact_inbox = contact_inbox
+    @contact = contact_inbox.contact
+  end
+
+  def set_contact_inbox
+    return if @contact_inbox.present?
+
+    @contact_inbox = ContactInbox.find_or_create_by!(
+      contact_id: @contact.id,
+      inbox_id: @inbox.id,
+      source_id: extract_phone_number(processed_params.dig('key', 'remoteJid'))
+    )
   end
 
   def set_conversation
-    @conversation = if @inbox.lock_to_single_conversation
-                      @contact_inbox.conversations.last
-                    else
-                      @contact_inbox.conversations.where.not(status: :resolved).last
-                    end
-
+    @conversation = @contact_inbox.conversations.where.not(status: :resolved).last
     return if @conversation
 
-    @conversation = ::Conversation.create!(conversation_params)
+    @conversation = ::Conversation.create!(
+      account_id: @inbox.account_id,
+      inbox_id: @inbox.id,
+      contact_id: @contact.id,
+      contact_inbox_id: @contact_inbox.id,
+      additional_attributes: {}
+    )
   end
 
   def create_message
-    message_params = {
-      content: extract_message_content,
+    content = extract_message_content
+    return if content.blank?
+
+    @message = @conversation.messages.create!(
+      content: content,
       account_id: @inbox.account_id,
       inbox_id: @inbox.id,
       message_type: :incoming,
       sender: @contact,
-      source_id: processed_params.dig(:key, :id)&.to_s,
-      content_attributes: {
-        in_reply_to_external_id: processed_params.dig(:messageInfo, :quotedMessageRowId)
-      }.compact
-    }
+      source_id: processed_params.dig('key', 'id')&.to_s
+    )
 
-    @message = @conversation.messages.create!(message_params)
-
-    attach_media if processed_params[:message] && processed_params.dig(:message, :mediaUrl).present?
+    Rails.logger.info("[Evolution] Message created: #{@message.id} - #{content}")
   end
 
   def extract_message_content
-    return processed_params.dig(:message, :conversation) if processed_params[:messageType] == 'conversation'
-    return processed_params.dig(:message, :extendedTextMessage, :text) if processed_params[:messageType] == 'extendedTextMessage'
+    msg_type = processed_params['messageType']
+    return processed_params.dig('message', 'conversation') if msg_type == 'conversation'
+    return processed_params.dig('message', 'extendedTextMessage', 'text') if msg_type == 'extendedTextMessage'
 
-    nil
+    processed_params.dig('message', 'conversation') ||
+      processed_params.dig('message', 'extendedTextMessage', 'text')
   end
 
-  def attach_media
-    media_url = processed_params.dig(:message, :mediaUrl)
-    media_type = processed_params.dig(:message, :mimetype)&.split('/')&.first || 'document'
+  def extract_phone_number(remote_jid)
+    return nil if remote_jid.blank?
 
-    @message.attachments.new(
-      account_id: @message.account_id,
-      file_type: media_type,
-      external_url: media_url
-    )
-    @message.save!
-  end
-
-  def normalize_phone_number(phone)
-    phone = phone.to_s.gsub(/[^\d]/, '')
-    phone.start_with?('0') ? "+57#{phone}" : (phone.start_with?('57') ? "+#{phone}" : phone)
-  end
-
-  def map_evolution_status(status)
-    case status
-    when 'DELIVERED' then 'delivered'
-    when 'READ' then 'read'
-    when 'ERROR' then 'failed'
-    else status.downcase
-    end
-  end
-
-  def conversation_params
-    {
-      account_id: @inbox.account_id,
-      inbox_id: @inbox.id,
-      contact_id: @contact.id,
-      contact_inbox_id: @contact_inbox.id
-    }
+    remote_jid.to_s.split('@').first.gsub(/\D/, '')
   end
 end
 
