@@ -265,7 +265,7 @@ Rails.application.routes.draw do
               post :disable_whatsapp_calling, on: :member
             end
 
-            resources :evolution, only: [], module: :accounts do
+            resources :evolution, only: [], controller: 'evolution' do
               get :get_qr_code, on: :member
               get :connection_status, on: :member
               post :reconnect, on: :member
