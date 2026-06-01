@@ -11,6 +11,8 @@ class Webhooks::EvolutionController < ActionController::API
   private
 
   def set_channel
-    @channel = Channel::Evolution.find_by(identifier: params[:instanceName])
+    instance_name = params[:instance_name] || params[:instance]
+    @channel = Channel::Evolution.find_by(instance_name: instance_name)
+    Rails.logger.warn("[Evolution Webhook] Channel not found for instance: #{instance_name}") if @channel.blank?
   end
 end

@@ -83,10 +83,39 @@ class Channel::Evolution < ApplicationRecord
   end
 
   def process_webhook(params)
-    Evolution::IncomingMessageService.new(inbox: inbox, params: params).perform
+    event = params['event'] || params[:event]
+    Rails.logger.info("[Evolution] Processing webhook event: #{event}")
+
+    case event
+    when 'messages.upsert', 'MESSAGES_UPSERT'
+      Evolution::IncomingMessageService.new(inbox: inbox, params: params).perform
+    when 'connection.update', 'CONNECTION_UPDATE'
+      handle_connection_update(params)
+    when 'send.message', 'SEND_MESSAGE'
+      Rails.logger.info('[Evolution] Ignoring send.message event')
+    else
+      Rails.logger.info("[Evolution] Unhandled event: #{event}")
+    end
+  rescue StandardError => e
+    Rails.logger.error("[Evolution] process_webhook failed: #{e.message}")
+    Rails.logger.error(e.backtrace.first(5).join("\n"))
   end
 
   private
+
+  def handle_connection_update(params)
+    data = params['data'] || params[:data] || {}
+    state = data['state'] || data[:state]
+    case state
+    when 'open'
+      update!(status: 'connected')
+      Rails.logger.info("[Evolution] Channel #{id} connected")
+    when 'close'
+      update!(status: 'disconnected')
+    when 'connecting'
+      update!(status: 'connecting')
+    end
+  end
 
   def setup_evolution_instance
     return if instance_id.present?
