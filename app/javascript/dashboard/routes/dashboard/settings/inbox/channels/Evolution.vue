@@ -3,7 +3,7 @@ import { mapGetters } from 'vuex';
 import { useVuelidate } from '@vuelidate/core';
 import { required } from '@vuelidate/validators';
 import { useAlert } from 'dashboard/composables';
-import axios from 'axios';
+import EvolutionAPI from 'dashboard/api/evolution';
 import router from '../../../../index';
 import PageHeader from '../../SettingsSubPageHeader.vue';
 import NextButton from 'dashboard/components-next/button/Button.vue';
@@ -81,9 +81,7 @@ export default {
     async ensureChannelId() {
       if (!this.inboxId || this.channelId) return;
 
-      const { data } = await axios.get(
-        `/api/v1/accounts/${this.accountId}/inboxes/${this.inboxId}`
-      );
+      const { data } = await EvolutionAPI.show(this.inboxId);
       this.channelId = data?.channel?.id || data?.channel_id || null;
     },
     startPolling() {
@@ -117,9 +115,7 @@ export default {
         await this.ensureChannelId();
         if (!this.channelId) return;
 
-        const { data } = await axios.get(
-          `/api/v1/accounts/${this.accountId}/inboxes/${this.inboxId}/evolution/${this.channelId}/get_qr_code`
-        );
+        const { data } = await EvolutionAPI.getQrCode(this.inboxId, this.channelId);
         this.qrCode = data?.qr_code || null;
         this.connectionStatus = data?.status || this.connectionStatus;
         if (this.connectionStatus === 'connected') {
@@ -134,9 +130,7 @@ export default {
         await this.ensureChannelId();
         if (!this.channelId) return;
 
-        const { data } = await axios.get(
-          `/api/v1/accounts/${this.accountId}/inboxes/${this.inboxId}/evolution/${this.channelId}/connection_status`
-        );
+        const { data } = await EvolutionAPI.getConnectionStatus(this.inboxId, this.channelId);
         this.connectionStatus = data?.status || this.connectionStatus;
         if (this.connectionStatus === 'connected') {
           this.stopPolling();
