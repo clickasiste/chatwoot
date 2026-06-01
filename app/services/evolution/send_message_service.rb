@@ -54,8 +54,7 @@ class Evolution::SendMessageService
   end
 
   def normalize_phone_number(phone)
-    phone = phone.to_s.gsub(/[^\d]/, '')
-    phone.start_with?('0') ? "+57#{phone}" : (phone.start_with?('57') ? "+#{phone}" : phone)
+    phone.to_s.gsub(/[^\d]/, '')
   end
 
   def update_message_external_id(message_id)
