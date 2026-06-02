@@ -130,17 +130,10 @@ class Channel::Evolution < ApplicationRecord
     return if message.status.to_s == new_status.to_s
 
     previous_status = message.status
-    message.update!(status: new_status)
+    message.status = new_status
+    message.save!
 
-    # Force ActionCable broadcast (frontend depends on this to update check marks)
-    Rails.configuration.dispatcher.dispatch(
-      'message.updated',
-      Time.zone.now,
-      message: message,
-      performed_by: nil
-    )
-
-    Rails.logger.info "[Evolution] message #{message.id} status #{previous_status} -> #{new_status} broadcasted"
+    Rails.logger.info "[Evolution] message #{message.id} status #{previous_status} -> #{new_status}"
   rescue StandardError => e
     Rails.logger.error "[Evolution] handle_message_status_update failed: #{e.class} #{e.message}"
     Rails.logger.error e.backtrace.first(5).join("\n")
