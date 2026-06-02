@@ -2,7 +2,7 @@
 import { mapGetters } from 'vuex';
 import { useRouter } from 'vue-router';
 import NextButton from 'dashboard/components-next/button/Button.vue';
-import { useAlert, useToast } from 'dashboard/composables';
+import { useAlert } from 'dashboard/composables';
 import QRCode from 'qrcode';
 
 export default {
@@ -103,7 +103,7 @@ export default {
           inboxId: this.inbox.id,
           channelId: this.channelId,
         });
-        useToast('Reconexión iniciada. Escanea el nuevo QR.');
+        useAlert('Reconexión iniciada. Escanea el nuevo QR.');
         this.fetchConnectionStatus();
       } catch (error) {
         useAlert('Error al reconectar');
@@ -119,7 +119,7 @@ export default {
           inboxId: this.inbox.id,
           channelId: this.channelId,
         });
-        useToast('Desconectado');
+        useAlert('Desconectado');
         this.fetchConnectionStatus();
       } catch (error) {
         useAlert('Error al desconectar');
@@ -141,7 +141,7 @@ export default {
           inboxId: this.inbox.id,
           channelId: this.channelId,
         });
-        useToast('Inbox eliminado');
+        useAlert('Inbox eliminado');
         this.stopPolling();
         if (this.router) {
           this.router.push({ name: 'settings_inbox_list' });
