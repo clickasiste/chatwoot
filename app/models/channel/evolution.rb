@@ -119,14 +119,15 @@ class Channel::Evolution < ApplicationRecord
     return if key_id.blank? || evolution_status.blank?
     Rails.logger.info "[Evolution] status update keyId=#{key_id} evolution_status=#{evolution_status}"
 
+    new_status = map_evolution_status(evolution_status)
+    return if new_status.blank?
+
     message = inbox.messages.find_by(source_id: key_id)
     if message.nil?
       Rails.logger.info "[Evolution] status update ignored, message not found source_id=#{key_id}"
       return
     end
 
-    new_status = map_evolution_status(evolution_status)
-    return if new_status.blank?
     return if message.status.to_s == new_status.to_s
 
     previous_status = message.status
@@ -141,9 +142,8 @@ class Channel::Evolution < ApplicationRecord
 
   def map_evolution_status(evolution_status)
     case evolution_status.to_s.upcase
-    when 'SERVER_ACK', 'PENDING' then 'sent'
-    when 'DELIVERY_ACK'          then 'delivered'
-    when 'READ', 'PLAYED'        then 'read'
+    when 'DELIVERY_ACK'   then 'delivered'
+    when 'READ', 'PLAYED' then 'read'
     end
   end
 
