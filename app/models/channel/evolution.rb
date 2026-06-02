@@ -237,9 +237,20 @@ class Channel::Evolution < ApplicationRecord
   def cleanup_evolution_instance
     return if instance_name.blank?
 
-    Rails.logger.info("[Evolution] cleaning up instance #{instance_name} before inbox destroy")
-    result = Evolution::ApiService.new(channel: self).delete_instance
-    Rails.logger.info("[Evolution] cleanup result: #{result.inspect}")
+    api = Evolution::ApiService.new(channel: self)
+
+    Rails.logger.info("[Evolution] logging out instance #{instance_name} before delete")
+    begin
+      logout_result = api.logout
+      Rails.logger.info("[Evolution] logout result: #{logout_result.inspect}")
+      sleep 1.5
+    rescue StandardError => e
+      Rails.logger.warn("[Evolution] logout failed (continuing to delete): #{e.message}")
+    end
+
+    Rails.logger.info("[Evolution] deleting instance #{instance_name}")
+    delete_result = api.delete_instance
+    Rails.logger.info("[Evolution] delete result: #{delete_result.inspect}")
   rescue StandardError => e
     Rails.logger.warn("[Evolution] cleanup failed (continuing destroy): #{e.class} #{e.message}")
   end
