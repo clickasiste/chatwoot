@@ -640,7 +640,8 @@
         "MESSAGE": "¿Está seguro de eliminar ",
         "PLACE_HOLDER": "Por favor, escriba {inboxName} para confirmar",
         "YES": "Sí, eliminar ",
-        "NO": "No, mantenerlo "
+        "NO": "No, mantenerlo ",
+        "EVOLUTION_NOTICE": " ⚠️ Importante: También debes desvincular el dispositivo manualmente desde tu WhatsApp móvil en: Configuración → Dispositivos vinculados → toca el dispositivo \"Chatwoot\" → Cerrar sesión. De lo contrario, el dispositivo seguirá apareciendo como vinculado en tu cuenta."
       },
       "API": {
         "SUCCESS_MESSAGE": "Bandeja de entrada eliminada correctamente",

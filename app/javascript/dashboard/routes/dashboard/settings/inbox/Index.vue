@@ -47,9 +47,16 @@ const deleteRejectText = computed(
   () => `${t('INBOX_MGMT.DELETE.CONFIRM.NO')} ${selectedInbox.value.name}`
 );
 
-const confirmDeleteMessage = computed(
-  () => `${t('INBOX_MGMT.DELETE.CONFIRM.MESSAGE')} ${selectedInbox.value.name}?`
-);
+const confirmDeleteMessage = computed(() => {
+  const baseMessage = `${t('INBOX_MGMT.DELETE.CONFIRM.MESSAGE')} ${selectedInbox.value.name}?`;
+  // Add Evolution-specific notice: Evolution API does NOT send the
+  // "unlink device" signal to Meta when logging out, so the user must
+  // remove the device manually from their WhatsApp mobile app.
+  if (selectedInbox.value.channel_type === 'Channel::Evolution') {
+    return `${baseMessage}${t('INBOX_MGMT.DELETE.CONFIRM.EVOLUTION_NOTICE')}`;
+  }
+  return baseMessage;
+});
 const confirmPlaceHolderText = computed(
   () =>
     `${t('INBOX_MGMT.DELETE.CONFIRM.PLACE_HOLDER', {
