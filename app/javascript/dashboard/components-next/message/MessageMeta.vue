@@ -19,6 +19,7 @@ const {
   isAWebWidgetInbox,
   isAWhatsAppChannel,
   isAnEmailChannel,
+  isAnEvolutionChannel,
   isAnInstagramChannel,
   isATiktokChannel,
 } = useInbox();
@@ -61,6 +62,7 @@ const isSent = computed(() => {
     isAFacebookInbox.value ||
     isASmsInbox.value ||
     isATelegramChannel.value ||
+    isAnEvolutionChannel.value ||
     isAnInstagramChannel.value ||
     isATiktokChannel.value
   ) {
@@ -84,6 +86,7 @@ const isDelivered = computed(() => {
     isATwilioChannel.value ||
     isASmsInbox.value ||
     isAFacebookInbox.value ||
+    isAnEvolutionChannel.value ||
     isAnInstagramChannel.value ||
     isATiktokChannel.value
   ) {
@@ -109,6 +112,7 @@ const isRead = computed(() => {
     isAWhatsAppChannel.value ||
     isATwilioChannel.value ||
     isAFacebookInbox.value ||
+    isAnEvolutionChannel.value ||
     isAnInstagramChannel.value ||
     isATiktokChannel.value
   ) {
