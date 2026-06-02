@@ -150,14 +150,26 @@ class Channel::Evolution < ApplicationRecord
   def handle_connection_update(params)
     data = params['data'] || params[:data] || {}
     state = data['state'] || data[:state]
+
     case state
     when 'open'
-      update!(status: 'connected')
-      Rails.logger.info("[Evolution] Channel #{id} connected")
+      update_columns(status: 'connected', updated_at: Time.current)
+      Rails.logger.info("[Evolution] Channel #{id} state=open status=connected")
+
+      wuid = data['wuid'] || data['instance']&.dig('user')&.dig('id') || data['user']&.dig('id')
+      if wuid.present?
+        phone = wuid.to_s.split('@').first.gsub(/\D/, '')
+        if phone.present? && phone.match?(/\A\d{8,15}\z/)
+          update_columns(phone_number: phone)
+          Rails.logger.info("[Evolution] Channel #{id} phone_number=#{phone}")
+        end
+      end
     when 'close'
-      update!(status: 'disconnected')
+      update_columns(status: 'disconnected', updated_at: Time.current)
+      Rails.logger.info("[Evolution] Channel #{id} state=close status=disconnected")
     when 'connecting'
-      update!(status: 'connecting')
+      update_columns(status: 'connecting', updated_at: Time.current)
+      Rails.logger.info("[Evolution] Channel #{id} state=connecting status=connecting")
     end
   end
 

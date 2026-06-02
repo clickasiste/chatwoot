@@ -223,9 +223,27 @@ class Evolution::IncomingMessageService
   end
 
   def extract_phone_number(remote_jid)
+    # Extract a valid E.164-compatible phone number from a WhatsApp JID.
+    # Only accepts standard WhatsApp JIDs (@s.whatsapp.net, @c.us). Rejects:
+    # - @lid (Linked ID - internal WhatsApp ID, not a phone number)
+    # - @g.us (group JID - not a contact)
+    # - @broadcast (broadcast list)
+    # - Anything else without a clean numeric phone
+    # Returns nil if the JID doesn't represent a real phone contact.
     return nil if remote_jid.blank?
 
-    remote_jid.to_s.split('@').first.gsub(/\D/, '')
+    jid = remote_jid.to_s
+    suffix = jid.split('@').last
+
+    unless %w[s.whatsapp.net c.us].include?(suffix)
+      Rails.logger.info("[Evolution] Skipping non-user JID: #{jid}")
+      return nil
+    end
+
+    phone = jid.split('@').first.gsub(/\D/, '')
+    return nil unless phone.match?(/\A\d{8,15}\z/)
+
+    phone
   end
 end
 
