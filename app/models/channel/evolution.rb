@@ -164,17 +164,61 @@ class Channel::Evolution < ApplicationRecord
   def setup_evolution_instance
     return if instance_id.present?
 
-    result = create_instance
-    Rails.logger.info("[Evolution] setup_evolution_instance result: #{result.inspect}")
+    Rails.logger.info("[Evolution] setup starting for instance_name=#{instance_name}")
 
-    if result[:success]
-      reload
-      webhook_result = Evolution::WebhookSetupService.new(channel: self).perform
-      Rails.logger.info("[Evolution] Webhook setup result: #{webhook_result.inspect}")
+    result = create_instance
+    Rails.logger.info("[Evolution] create_instance result: #{result.inspect}")
+
+    unless result[:success]
+      handle_setup_failure("create_instance failed: #{result[:error].inspect}")
+      return
     end
+
+    reload
+
+    if instance_id.blank?
+      handle_setup_failure('instance_id missing after create (Evolution returned no id)')
+      return
+    end
+
+    webhook_result = Evolution::WebhookSetupService.new(channel: self).perform
+    Rails.logger.info("[Evolution] webhook setup result: #{webhook_result.inspect}")
+
+    unless webhook_result[:success]
+      handle_setup_failure("webhook setup failed: #{webhook_result[:error].inspect}")
+      return
+    end
+
+    Rails.logger.info("[Evolution] setup completed successfully for #{instance_name}")
   rescue StandardError => e
-    Rails.logger.error("[Evolution] setup_evolution_instance failed: #{e.message}")
+    Rails.logger.error("[Evolution] setup_evolution_instance exception: #{e.class} #{e.message}")
     Rails.logger.error(e.backtrace.first(10).join("\n"))
+    handle_setup_failure("unexpected exception: #{e.message}")
+  end
+
+  def handle_setup_failure(reason)
+    Rails.logger.error("[Evolution] Setup FAILED for #{instance_name}: #{reason}")
+
+    begin
+      if instance_name.present?
+        Evolution::ApiService.new(channel: self).delete_instance
+        Rails.logger.info("[Evolution] cleaned up Evolution-side instance #{instance_name}")
+      end
+    rescue StandardError => e
+      Rails.logger.warn("[Evolution] cleanup of Evolution-side instance failed: #{e.message}")
+    end
+
+    update_column(:status, 'error') if respond_to?(:status)
+
+    if inbox.present?
+      inbox_id_for_log = inbox.id
+      begin
+        inbox.destroy!
+        Rails.logger.info("[Evolution] destroyed orphan inbox=#{inbox_id_for_log}")
+      rescue StandardError => e
+        Rails.logger.error("[Evolution] inbox.destroy failed: #{e.message}")
+      end
+    end
   end
 end
 
