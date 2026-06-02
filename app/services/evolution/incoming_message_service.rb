@@ -148,18 +148,52 @@ class Evolution::IncomingMessageService
   end
 
   def build_attachment_info(data, file_type, default_mime)
-    base64_data = data['base64'] || processed_params['base64']
-    return nil if base64_data.blank?
+    download_result = download_media_from_evolution
+    return nil if download_result.blank?
 
-    mime = data['mimetype'] || default_mime
-    filename = data['fileName'].presence || generate_file_name(file_type, mime)
+    base64_data = download_result['base64']
+    return nil if base64_data.blank?
 
     {
       file_type: file_type,
-      mime: mime,
-      filename: filename,
+      mime: download_result['mimetype'].presence || data['mimetype'].presence || default_mime,
+      filename: download_result['fileName'].presence || data['fileName'].presence || generate_file_name(file_type, default_mime),
       base64: base64_data
     }
+  end
+
+  def download_media_from_evolution
+    url = ENV.fetch('EVOLUTION_API_URL', 'https://evo.clickasiste.com')
+    key = ENV.fetch('EVOLUTION_API_KEY', nil)
+    instance = @inbox.channel.instance_name
+
+    body = {
+      message: {
+        key: {
+          remoteJid: processed_params.dig('key', 'remoteJid'),
+          fromMe: processed_params.dig('key', 'fromMe'),
+          id: processed_params.dig('key', 'id')
+        }
+      },
+      convertToMp4: false
+    }
+
+    response = HTTParty.post(
+      "#{url}/chat/getBase64FromMediaMessage/#{instance}",
+      headers: { 'apikey' => key, 'Content-Type' => 'application/json' },
+      body: body.to_json,
+      timeout: 60
+    )
+
+    unless [200, 201].include?(response.code)
+      Rails.logger.error("[Evolution] downloadMedia failed HTTP #{response.code}: #{response.body.to_s[0..300]}")
+      return nil
+    end
+
+    response.parsed_response
+  rescue StandardError => e
+    Rails.logger.error("[Evolution] downloadMedia exception: #{e.class} #{e.message}")
+    nil
   end
 
   def generate_file_name(file_type, mime)
