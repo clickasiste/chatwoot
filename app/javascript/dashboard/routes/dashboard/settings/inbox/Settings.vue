@@ -16,6 +16,7 @@ import DuplicateInboxBanner from './channels/instagram/DuplicateInboxBanner.vue'
 import MicrosoftReauthorize from './channels/microsoft/Reauthorize.vue';
 import GoogleReauthorize from './channels/google/Reauthorize.vue';
 import WhatsappReauthorize from './channels/whatsapp/Reauthorize.vue';
+import EvolutionSettings from './channels/EvolutionSettings.vue';
 import InboxHealthAPI from 'dashboard/api/inboxHealth';
 import PreChatFormSettings from './PreChatForm/Settings.vue';
 import WeeklyAvailability from './components/WeeklyAvailability.vue';
@@ -68,6 +69,7 @@ export default {
     InstagramReauthorize,
     TiktokReauthorize,
     WhatsappReauthorize,
+    EvolutionSettings,
     DuplicateInboxBanner,
     Editor,
     Avatar,
@@ -1273,6 +1275,7 @@ export default {
           :class="isAWebWidgetInbox ? 'max-w-7xl' : 'max-w-4xl'"
         >
           <ConfigurationPage :inbox="inbox" />
+          <EvolutionSettings v-if="isAnEvolutionChannel" :inbox="inbox" />
         </div>
         <div
           v-if="selectedTabKey === 'voice-configuration'"

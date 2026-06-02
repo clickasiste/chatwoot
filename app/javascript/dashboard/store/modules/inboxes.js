@@ -2,6 +2,7 @@ import * as MutationHelpers from 'shared/helpers/vuex/mutationHelpers';
 import * as types from '../mutation-types';
 import { INBOX_TYPES } from 'dashboard/helper/inbox';
 import InboxesAPI from '../../api/inboxes';
+import EvolutionAPI from '../../api/evolution';
 import WebChannel from '../../api/channel/webChannel';
 import FBChannel from '../../api/channel/fbChannel';
 import TwilioChannel from '../../api/channel/twilioChannel';
@@ -376,25 +377,39 @@ export const actions = {
       return null;
     }
   },
-  getEvolutionStatus: async (_, { inboxId }) => {
+  getEvolutionStatus: async (_, { inboxId, channelId }) => {
     try {
-      const response = await InboxesAPI.getConnectionStatus(inboxId);
+      const response = await EvolutionAPI.getConnectionStatus(
+        inboxId,
+        channelId
+      );
       return response.data;
     } catch (error) {
       throw new Error(error);
     }
   },
-  reconnectEvolution: async (_, { inboxId }) => {
+  reconnectEvolution: async (_, { inboxId, channelId }) => {
     try {
-      const response = await InboxesAPI.reconnect(inboxId);
+      const response = await EvolutionAPI.reconnect(inboxId, channelId);
       return response.data;
     } catch (error) {
       throw new Error(error);
     }
   },
-  disconnectEvolution: async (_, { inboxId }) => {
+  disconnectEvolution: async (_, { inboxId, channelId }) => {
     try {
-      const response = await InboxesAPI.disconnectEvolution(inboxId);
+      const response = await EvolutionAPI.disconnect(inboxId, channelId);
+      return response.data;
+    } catch (error) {
+      throw new Error(error);
+    }
+  },
+  deleteEvolution: async (_, { inboxId, channelId }) => {
+    try {
+      const response = await EvolutionAPI.deleteInstance(
+        inboxId,
+        channelId
+      );
       return response.data;
     } catch (error) {
       throw new Error(error);
