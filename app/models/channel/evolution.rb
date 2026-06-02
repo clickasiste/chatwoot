@@ -49,6 +49,7 @@ class Channel::Evolution < ApplicationRecord
   }
 
   after_create_commit :setup_evolution_instance
+  before_destroy :cleanup_evolution_instance
 
   def name
     'Evolution'
@@ -231,6 +232,16 @@ class Channel::Evolution < ApplicationRecord
         Rails.logger.error("[Evolution] inbox.destroy failed: #{e.message}")
       end
     end
+  end
+
+  def cleanup_evolution_instance
+    return if instance_name.blank?
+
+    Rails.logger.info("[Evolution] cleaning up instance #{instance_name} before inbox destroy")
+    result = Evolution::ApiService.new(channel: self).delete_instance
+    Rails.logger.info("[Evolution] cleanup result: #{result.inspect}")
+  rescue StandardError => e
+    Rails.logger.warn("[Evolution] cleanup failed (continuing destroy): #{e.class} #{e.message}")
   end
 end
 
