@@ -214,6 +214,10 @@ export default {
       if (this.isAnInstagramChannel || this.isInstagramDM) {
         channelType = INBOX_TYPES.INSTAGRAM;
       }
+      // Channel::Evolution uses the same file types as WhatsApp
+      if (channelType === INBOX_TYPES.EVOLUTION) {
+        channelType = INBOX_TYPES.WHATSAPP;
+      }
 
       return getAllowedFileTypesByChannel({
         channelType,
