@@ -1,3 +1,5 @@
+require 'base64'
+
 class Evolution::IncomingMessageService
   pattr_initialize [:inbox!, :params!]
 
@@ -95,10 +97,10 @@ class Evolution::IncomingMessageService
   end
 
   def create_message
-    content = extract_message_content
-    return if content.blank?
+    content, attachment_info = extract_message_payload
+    return if content.blank? && attachment_info.nil?
 
-    @message = @conversation.messages.create!(
+    @message = @conversation.messages.build(
       content: content,
       account_id: @inbox.account_id,
       inbox_id: @inbox.id,
@@ -107,16 +109,83 @@ class Evolution::IncomingMessageService
       source_id: processed_params.dig('key', 'id')&.to_s
     )
 
-    Rails.logger.info("[Evolution] Message created: #{@message.id} - #{content}")
+    attach_media_to(@message, attachment_info) if attachment_info
+
+    @message.save!
+    Rails.logger.info("[Evolution] Message created: id=#{@message.id} content=#{content.to_s[0..40]} attachment=#{attachment_info ? attachment_info[:file_type] : 'none'}")
+  rescue StandardError => e
+    Rails.logger.error("[Evolution] create_message failed: #{e.class} #{e.message}")
+    Rails.logger.error(e.backtrace.first(5).join("\n"))
   end
 
-  def extract_message_content
-    msg_type = processed_params['messageType']
-    return processed_params.dig('message', 'conversation') if msg_type == 'conversation'
-    return processed_params.dig('message', 'extendedTextMessage', 'text') if msg_type == 'extendedTextMessage'
+  def extract_message_payload
+    msg_type = processed_params['messageType'].to_s
+    msg = processed_params['message'] || {}
 
-    processed_params.dig('message', 'conversation') ||
-      processed_params.dig('message', 'extendedTextMessage', 'text')
+    case msg_type
+    when 'conversation'
+      [msg['conversation'], nil]
+    when 'extendedTextMessage'
+      [msg.dig('extendedTextMessage', 'text'), nil]
+    when 'imageMessage'
+      data = msg['imageMessage'] || {}
+      [data['caption'], build_attachment_info(data, 'image', 'image/jpeg')]
+    when 'videoMessage'
+      data = msg['videoMessage'] || {}
+      [data['caption'], build_attachment_info(data, 'video', 'video/mp4')]
+    when 'audioMessage'
+      data = msg['audioMessage'] || {}
+      [nil, build_attachment_info(data, 'audio', 'audio/ogg')]
+    when 'documentMessage'
+      data = msg['documentMessage'] || {}
+      [data['caption'] || data['fileName'], build_attachment_info(data, 'file', 'application/octet-stream')]
+    when 'stickerMessage'
+      data = msg['stickerMessage'] || {}
+      [nil, build_attachment_info(data, 'image', 'image/webp')]
+    else
+      [nil, nil]
+    end
+  end
+
+  def build_attachment_info(data, file_type, default_mime)
+    base64_data = data['base64'] || processed_params['base64']
+    return nil if base64_data.blank?
+
+    mime = data['mimetype'] || default_mime
+    filename = data['fileName'].presence || generate_file_name(file_type, mime)
+
+    {
+      file_type: file_type,
+      mime: mime,
+      filename: filename,
+      base64: base64_data
+    }
+  end
+
+  def generate_file_name(file_type, mime)
+    ext = case mime.to_s
+          when 'image/jpeg' then 'jpg'
+          when 'image/png' then 'png'
+          when 'image/webp' then 'webp'
+          when 'video/mp4' then 'mp4'
+          when 'audio/ogg', 'audio/ogg; codecs=opus' then 'ogg'
+          when 'audio/mpeg' then 'mp3'
+          when 'application/pdf' then 'pdf'
+          else 'bin'
+          end
+    "#{file_type}-#{Time.now.to_i}.#{ext}"
+  end
+
+  def attach_media_to(message, info)
+    io = StringIO.new(Base64.strict_decode64(info[:base64]))
+    message.attachments.new(
+      account_id: message.account_id,
+      file_type: info[:file_type]
+    ).file.attach(
+      io: io,
+      filename: info[:filename],
+      content_type: info[:mime]
+    )
   end
 
   def extract_phone_number(remote_jid)

@@ -51,7 +51,7 @@ class Evolution::WebhookSetupService
         enabled: true,
         url: "#{ENV.fetch('FRONTEND_URL')}/webhooks/evolution/#{channel.instance_name}",
         byEvents: false,
-        base64: false,
+        base64: true,
         events: %w[
           QRCODE_UPDATED
           CONNECTION_UPDATE
